@@ -1,6 +1,16 @@
 from typing import Tuple
 import numpy as np
 
+def split_data(x, y, ratio, seed=1):
+    """Split the dataset between train and test based on the split ratio."""
+    np.random.seed(seed)
+
+    n = len(y)
+    indices = np.random.permutation(n)
+    split = int(ratio * n)
+    train_indices, test_indices = indices[:split], indices[split:]
+    return x[train_indices], y[train_indices], x[test_indices], y[test_indices]
+
 
 def mean_squarred_error_gd(y, tx, initial_w, max_iters: int, gamma: float) -> Tuple[np.ndarray, float]:
     """Linear regression using gradient descent
@@ -20,7 +30,7 @@ def mean_squarred_error_gd(y, tx, initial_w, max_iters: int, gamma: float) -> Tu
     return mean_squarred_error_sgd(y, tx, initial_w, max_iters, gamma, batch_size=len(y))
 
 
-def mean_squarred_error_sgd(y, tx, initial_w, max_iters: int, gamma: float, batch_size: int=1) -> Tuple[np.ndarray, float]:
+def mean_squarred_error_sgd(y, tx, initial_w, max_iters: int, gamma: float, batch_size: int=1, return_history: bool=False) -> Tuple[np.ndarray, float]:
     """Linear regression using stochastic gradient descent
 
     Args:
@@ -52,13 +62,18 @@ def mean_squarred_error_sgd(y, tx, initial_w, max_iters: int, gamma: float, batc
             # Update
             w = w - gamma * gradient
 
+            loss = compute_mse(y_batch, tx_batch, w)
+            if return_history:
+                weights.append(w)
+                losses.append(loss)
+
         loss = compute_mse(y, tx, w)
         print(f"MSE GD ({n_iter + 1}/{max_iters}): {loss=} {w=}")
 
-        weights.append(w)
-        losses.append(loss)
-    return losses, weights
-    return w, loss
+    if return_history:
+        return weights, losses
+    else:
+        return w, loss
 
 
 def least_squares(y, tx):
@@ -94,8 +109,13 @@ def compute_mse(y, tx, w) -> float:
     0.006417022764962313
     """
     N, D = tx.shape
-    assert y.shape == (N,1), f"y.shape = {y.shape}, expected {(N,)}"
-    assert w.shape == (D,1), f"w.shape = {w.shape}, expected {(D,)}"
+    assert y.shape in [(N,), (N,1)]
+    assert w.shape in [(D,), (D,1)]
+
+    if len(y.shape) == 1:
+        y = y[:, np.newaxis]
+    if len(w.shape) == 1:
+        w = w[:, np.newaxis]
 
     return np.sum((y - (tx @ w)) ** 2) / (2 * N)
 
