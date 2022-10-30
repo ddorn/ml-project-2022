@@ -2,7 +2,20 @@ from typing import Tuple
 import numpy as np
 
 def split_data(x, y, ratio, seed=1):
-    """Split the dataset between train and test based on the split ratio."""
+    """Split the dataset between train and test based on the split ratio.
+    
+    Args:
+        x: Array of shape (N, D) containing the samples
+        y: Array of shape (N,) containing the labels
+        ratio: Ratio of the train-test split
+        seed: Seed to be used with np.random.seed
+
+    Returns:
+        x_train: Array of shape (ratio*N, D) containing the training samples
+        y_train: Array of shape (ratio*N,) containing the training labels
+        x_test: Array of shape ((1-ratio)*N, D) containing the test samples
+        y_test: Array of shape ((1-ratio)*N, ) containing the test labels
+    """
     np.random.seed(seed)
 
     n = len(y)
@@ -39,10 +52,12 @@ def mean_squarred_error_sgd(y, tx, initial_w, max_iters: int, gamma: float, batc
         initial_w: Array of shape (D,) containing the initial weights
         max_iters: Number of iterations to run
         gamma: Step size
+        batch_size: Size of the minibatch
+        return_history: Boolean that indicates whether all weights and losses should be returned
 
     Returns:
-        w: Array of shape (D,) containing the final weights
-        loss: Final loss
+        w: Array of shape (D,) containing the final weight(s)
+        loss: Final loss(es)
     """
 
     weights = [initial_w]
@@ -104,9 +119,6 @@ def compute_mse(y, tx, w) -> float:
 
     Returns:
         mse: scalar corresponding to the mse with factor (1 / 2 n) in front of the sum
-
-    >>> compute_mse(np.array([0.1,0.2]), np.array([[2.3, 3.2], [1., 0.1]]), np.array([0.03947092, 0.00319628]))
-    0.006417022764962313
     """
     N, D = tx.shape
     assert y.shape in [(N,), (N,1)]
@@ -145,7 +157,7 @@ def ridge_regression(y, tx, lambda_):
         lambda_: scalar.
 
     Returns:
-        w: optimal weights, numpy array of shape(D,), D is the number of features.
+        (w, loss): Array of shape(D,) containing the weights and the corresponding loss
     """
     D = 1 if len(tx.shape) == 1 else tx.shape[1]
     N = len(y)
@@ -218,9 +230,10 @@ def calculate_gradient(y, tx, w, lambda_=0):
         y:  shape=(N, 1)
         tx: shape=(N, D)
         w:  shape=(D, 1)
+        lambda_: regularization term, 0 by default
 
     Returns:
-        a vector of shape (D, 1)
+        a gradient of shape (D, 1)
     """
 
     sig = sigmoid(tx @ w)
@@ -230,6 +243,19 @@ def calculate_gradient(y, tx, w, lambda_=0):
 
 ## Uses gradient descent
 def logistic_regression(y, tx, initial_w, max_iters, gamma):
+    """Logistic regression
+
+    Args:
+        y: Array of shape (N,) containing the data labels
+        tx: Array of shape (N,D) containing the samples
+        initial_w: Array of shape (D,1) containing the initial weights
+        max_iters: Scalar indicating the maximum iteration steps
+        gamma: Step size 
+    
+    Returns:
+        (w, loss): Array of shape (D, 1) containing the resulting weights and the corresponding loss
+    
+    """
     # init parameters
     threshold = 1e-8
     losses = []
@@ -262,9 +288,34 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
 
 
 def compute_penalty_term(lambda_, w):
+    """Computes the l2-norm regularization term
+
+    Args:
+        lambda_: Scalar indicating the regularization strength
+        w: Array of shape (D,1)
+
+    Returns:
+        penalty: scalar, the penalty to be applied
+    
+    """
     return lambda_ * (np.linalg.norm(w) ** 2)
 
 def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
+    """Regularized logistic regression with l2-norm
+
+    Args:
+        y: Array of shape (N,) containing the data labels
+        tx: Array of shape (N,D) containing the samples
+        lambda_: Scalar indicating the regularization strenght
+        initial_w: Array of shape (D,1) containing the initial weights
+        max_iters: Scalar indicating the maximum iteration steps
+        gamma: Step size
+
+    Returns:
+        (w, loss): Array of shape (D, 1) containing the resulting weights and the corresponding loss
+    """
+
+
     # init parameters
     threshold = 1e-8
     losses = []
