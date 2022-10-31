@@ -1,6 +1,6 @@
 # ML project 2022
 
-For run.ipynb to work, please place the files `test.csv` and `train.csv` in the root folder.
+For run.ipynb to work, please place the files `test.csv` and `train.csv` in the root folder. If this does not work, we probably did not have enough time to wrap up before the deadline. You can check our later commits to find a reorganized `run.ipynb`.
 
 For data processing, we normalize our dataset, then expand it in the following way:
 - powers 2, 3, 4 of all features
