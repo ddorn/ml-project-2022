@@ -1,6 +1,6 @@
 # ML project 2022
 
-For run.py to work, please place the files `test.csv` and `train.csv` in the `project1` folder.
+For run.py to work, please place the files `test.csv` and `train.csv` in the `project1/data` folder.
 
 For data processing, we normalize our dataset, then expand it in the following way:
 - powers 2, 3, 4 of all features
