@@ -1,5 +1,6 @@
 from typing import Tuple
 import numpy as np
+from tqdm.notebook import tqdm
 
 def split_data(x, y, ratio, seed=1):
     """Split the dataset between train and test based on the split ratio."""
@@ -12,7 +13,17 @@ def split_data(x, y, ratio, seed=1):
     return x[train_indices], y[train_indices], x[test_indices], y[test_indices]
 
 
-def mean_squarred_error_gd(y, tx, initial_w, max_iters: int, gamma: float) -> Tuple[np.ndarray, float]:
+def normalize_features(x, dont_touch=None):
+    mean = np.mean(x, axis=0)
+    std = np.std(x, axis=0)
+    if dont_touch:
+        mean[dont_touch] = 0
+        std[dont_touch] = 1
+    std[std == 0] = 1  # Some features are constant
+    return (x - mean) / std, mean, std
+
+
+def mean_squared_error_gd(y, tx, initial_w, max_iters: int, gamma: float) -> Tuple[np.ndarray, float]:
     """Linear regression using gradient descent
 
     Args:
@@ -27,10 +38,12 @@ def mean_squarred_error_gd(y, tx, initial_w, max_iters: int, gamma: float) -> Tu
         loss: Final loss
     """
 
-    return mean_squarred_error_sgd(y, tx, initial_w, max_iters, gamma, batch_size=len(y))
+    return mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma, batch_size=len(y))
 
 
-def mean_squarred_error_sgd(y, tx, initial_w, max_iters: int, gamma: float, batch_size: int=1, return_history: bool=False) -> Tuple[np.ndarray, float]:
+def mean_squared_error_sgd(y, tx, initial_w, max_iters: int, gamma: float,
+    lambda_: float = 0,
+    batch_size: int=1, return_history: bool=False) -> Tuple[np.ndarray, float]:
     """Linear regression using stochastic gradient descent
 
     Args:
@@ -50,7 +63,7 @@ def mean_squarred_error_sgd(y, tx, initial_w, max_iters: int, gamma: float, batc
 
     w = initial_w
     loss = -1
-    for n_iter in range(max_iters):
+    for n_iter in tqdm(range(max_iters)):
         shuffled_indices = np.random.permutation(len(y))
         for batch_indices in np.array_split(shuffled_indices, len(y) // batch_size):
             y_batch = y[batch_indices]
@@ -58,7 +71,8 @@ def mean_squarred_error_sgd(y, tx, initial_w, max_iters: int, gamma: float, batc
 
             # Computing the gradient
             e = y_batch - np.einsum('nd,d->n', tx_batch, w)
-            gradient = -1/len(y_batch) * np.einsum('n,nd->d', e, tx_batch)
+            gradient = -1/len(y_batch) * np.einsum('n,nd->d', e, tx_batch) \
+                + 2 * lambda_ * w  # optional regularization
             # Update
             w = w - gamma * gradient
 
@@ -68,7 +82,8 @@ def mean_squarred_error_sgd(y, tx, initial_w, max_iters: int, gamma: float, batc
                 losses.append(loss)
 
         loss = compute_mse(y, tx, w)
-        print(f"MSE GD ({n_iter + 1}/{max_iters}): {loss=} {w=}")
+        if n_iter % (max_iters // 10) == max_iters // 10 - 1:
+            print(f"MSE SGD ({n_iter + 1}/{max_iters}): {loss=}")
 
     if return_history:
         return weights, losses
